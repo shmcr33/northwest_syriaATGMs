@@ -21,4 +21,4 @@ Harakat Hazzm
 
 Liwa Fursan al-Haqq 
 
-Addtional data will be uploaded as the geolocation and validation of videos from different groups is completed. OpenStreetMap is currently the base layer. 
+Addtional data will be uploaded as the geolocation and validation of videos from different groups is completed. OpenStreetMaps, MapBox Topograhy, and MapBox Streets V-12 are currently the base layer. 
