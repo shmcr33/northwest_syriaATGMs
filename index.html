@@ -6,6 +6,13 @@
     <title>Northwest Syria ATGM Locations - Syrian Civil War</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
     <style>
+
+    .leaflet-control-layers {
+        background: white;
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
         body {
             margin: 0;
             padding: 0;
@@ -416,12 +423,42 @@
 
         map = L.map('map').setView([35.0, 38.0], 7);
 
-        L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoic2htY3JlZSIsImEiOiJjbWxoOGU0bTcwNngwM2VwdXlmdHQ0NTNrIn0.otN-Kb4dQz63-LwUZIz5NQ', {
-            attribution: '© Mapbox © OpenStreetMap contributors',
-            tileSize: 512,
-            zoomOffset: -1,
-            maxZoom: 19
-        }).addTo(map);
+    const MAPBOX_TOKEN = 'pk.eyJ1Ijoic2htY3JlZSIsImEiOiJjbWxoOGU0bTcwNngwM2VwdXlmdHQ0NTNrIn0.otN-Kb4dQz63-LwUZIz5NQ';
+
+// Define base map layers
+    const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+    });
+
+    const mapboxStreetsLayer = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}?access_token=' + MAPBOX_TOKEN, {
+        attribution: '© Mapbox © OpenStreetMap contributors',
+        tileSize: 512,
+        zoomOffset: -1,
+        maxZoom: 19
+    });
+
+    const mapboxTopoLayer = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/outdoors-v12/tiles/{z}/{x}/{y}?access_token=' + MAPBOX_TOKEN, {
+        attribution: '© Mapbox © OpenStreetMap contributors',
+        tileSize: 512,
+        zoomOffset: -1,
+        maxZoom: 19
+    });
+
+// Add Mapbox Streets as the default
+    mapboxStreetsLayer.addTo(map);
+
+// Create layer control
+    const baseMaps = {
+        "Mapbox Streets": mapboxStreetsLayer,
+        "Mapbox Topography": mapboxTopoLayer,
+        "OpenStreetMap": osmLayer
+    };
+
+    L.control.layers(baseMaps, null, {
+        position: 'topright',
+        collapsed: false
+    }).addTo(map);
         
         markerLayer = L.layerGroup().addTo(map);
         heatLayer = null;
