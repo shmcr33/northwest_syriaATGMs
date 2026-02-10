@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TOW Launch Locations - Syrian Civil War</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+        .filter-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            z-index: 1000;
+            max-height: 90vh;
+            overflow-y: auto;
+            width: 250px;
+        }
+        .filter-panel h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+        }
+        .filter-group {
+            margin-bottom: 12px;
+        }
+        .filter-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+        .filter-group select, .filter-group input {
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        .reset-btn {
+            width: 100%;
+            padding: 8px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .reset-btn:hover {
+            background: #0056b3;
+        }
+        .data-counter {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            z-index: 1000;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .layer-toggle {
+            position: absolute;
+            top: 70px;
+            left: 10px;
+            background: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            z-index: 1000;
+            font-size: 13px;
+        }
+        .layer-toggle label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            margin: 5px 0;
+        }
+        .layer-toggle input[type="checkbox"] {
+            margin-right: 8px;
+            cursor: pointer;
+        }
+        .timeline-panel {
+            position: absolute;
+            bottom: 30px;
+            left: 10px;
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            z-index: 1000;
+            width: 300px;
+        }
+        .timeline-panel h4 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+        }
+        .current-date-display {
+            background: #f0f0f0;
+            padding: 8px;
+            border-radius: 3px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+        .slider-container {
+            margin: 10px 0;
+        }
+        .slider-container input[type="range"] {
+            width: 100%;
+        }
+        .date-display {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        .play-controls {
+            margin-top: 10px;
+            display: flex;
+            gap: 5px;
+        }
+        .play-btn {
+            padding: 5px 10px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            flex: 1;
+        }
+        .play-btn:hover {
+            background: #218838;
+        }
+        .play-btn.playing {
+            background: #dc3545;
+        }
+        .play-btn.playing:hover {
+            background: #c82333;
+        }
+        .legend {
+            position: absolute;
+            bottom: 30px;
+            right: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            z-index: 1000;
+            font-size: 12px;
+        }
+        .legend h4 {
+            margin: 0 0 8px 0;
+            font-size: 13px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+        }
+        .legend-section {
+            margin: 10px 0;
+        }
+        .legend-section-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 11px;
+        }
+        .legend-item {
+            margin: 5px 0;
+            display: flex;
+            align-items: center;
+        }
+        .legend-marker {
+            margin-right: 8px;
+            border: 2px solid #333;
+        }
+        .legend-marker-circle {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .legend-marker-square {
+            width: 12px;
+            height: 12px;
+        }
+        .legend-marker-diamond {
+            width: 12px;
+            height: 12px;
+            transform: rotate(45deg);
+        }
+        .legend-marker-triangle {
+            width: 0;
+            height: 0;
+            border-left: 7px solid transparent;
+            border-right: 7px solid transparent;
+            border-bottom: 12px solid;
+            border-top: none;
+            margin-left: 2px;
+        }
+        .legend-marker-star {
+            width: 12px;
+            height: 12px;
+            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+        }
+        .legend-marker-pentagon {
+            width: 12px;
+            height: 12px;
+            clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+        }
+        .precise { background: #5A2A5E; }
+        .approximate { background: #9C3F2E; }
+        .general { background: #C2A14D; }
+        
+        .leaflet-popup-content {
+            margin: 10px;
+            font-size: 13px;
+        }
+        .popup-field {
+            margin: 5px 0;
+        }
+        .popup-field strong {
+            display: inline-block;
+            width: 120px;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    
+    <div class="data-counter">
+        <div>Showing: <span id="visibleCount">0</span> / <span id="totalCount">0</span> strikes</div>
+    </div>
+    
+    <div class="layer-toggle">
+        <label>
+            <input type="checkbox" id="showMarkers" checked onchange="toggleMarkers()">
+            Show Markers
+        </label>
+        <label>
+            <input type="checkbox" id="showHeatmap" onchange="toggleHeatmap()">
+            Show Heatmap
+        </label>
+    </div>
+    
+    <div class="filter-panel">
+        <h3>Filter Options</h3>
+        
+        <div class="filter-group">
+            <label>Date Range</label>
+            <input type="date" id="dateFrom" placeholder="From">
+            <input type="date" id="dateTo" placeholder="To" style="margin-top: 5px;">
+        </div>
+        
+        <div class="filter-group">
+            <label>Location</label>
+            <select id="locationFilter">
+                <option value="">All Locations</option>
+            </select>
+        </div>
+        
+        <div class="filter-group">
+            <label>Province</label>
+            <select id="provinceFilter">
+                <option value="">All Provinces</option>
+            </select>
+        </div>
+        
+        <div class="filter-group">
+            <label>Precision</label>
+            <select id="precisionFilter">
+                <option value="">All</option>
+            </select>
+        </div>
+        
+        <div class="filter-group">
+            <label>ATGM</label>
+            <select id="atmgFilter">
+                <option value="">All</option>
+            </select>
+        </div>
+        
+        <div class="filter-group">
+            <label>Target Class</label>
+            <select id="targetClassFilter">
+                <option value="">All</option>
+            </select>
+        </div>
+        
+        <div class="filter-group">
+            <label>Target Subclass</label>
+            <select id="targetSubclassFilter">
+                <option value="">All</option>
+            </select>
+        </div>
+        
+        <div class="filter-group">
+            <label>Result</label>
+            <select id="resultFilter">
+                <option value="">All</option>
+            </select>
+        </div>
+        
+        <div class="filter-group">
+            <label>Group</label>
+            <select id="groupFilter">
+                <option value="">All</option>
+            </select>
+        </div>
+        
+        <div class="filter-group">
+            <label>Enemy</label>
+            <select id="enemyFilter">
+                <option value="">All</option>
+            </select>
+        </div>
+        
+        <button class="reset-btn" onclick="resetFilters()">Reset Filters</button>
+    </div>
+    
+    <div class="timeline-panel">
+        <h4>Timeline Control</h4>
+        <div class="current-date-display" id="currentDateDisplay">All Data</div>
+        <div class="slider-container">
+            <label style="font-size: 12px;">Time Range:</label>
+            <input type="range" id="timeSlider" min="0" max="100" value="100" step="1">
+            <div class="date-display">
+                <span id="sliderStartDate">Start</span>
+                <span id="sliderEndDate">End</span>
+            </div>
+        </div>
+        <div class="play-controls">
+            <button class="play-btn" id="playBtn" onclick="togglePlay()">▶ Play</button>
+            <button class="play-btn" onclick="resetTimeline()">Reset</button>
+        </div>
+    </div>
+    
+    <div class="legend">
+        <h4>Legend</h4>
+        
+        <div class="legend-section">
+            <div class="legend-section-title">Precision (Color)</div>
+            <div class="legend-item">
+                <div class="legend-marker legend-marker-circle" style="background: #7fbf9b; border: 2px solid #333;"></div>
+                <span>Precise</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-marker legend-marker-circle" style="background: #E6C86E; border: 2px solid #333;"></div>
+                <span>Approximate</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-marker legend-marker-circle" style="background: #D88C8C; border: 2px solid #333;"></div>
+                <span>General</span>
+            </div>
+        </div>
+        
+        <div class="legend-section">
+            <div class="legend-section-title">ATGM Type (Shape)</div>
+            <div class="legend-item">
+                <div class="legend-marker legend-marker-circle" style="background: #7fbf9b; border: 2px solid #333;"></div>
+                <span>TOW</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-marker legend-marker-square" style="background: #7fbf9b; border: 2px solid #333;"></div>
+                <span>Fagot</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-marker legend-marker-diamond" style="background: #7fbf9b; border: 2px solid #333;"></div>
+                <span>Konkurs</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-marker legend-marker-triangle" style="border-bottom-color: #7fbf9b; filter: drop-shadow(0 0 0.5px #333);"></div>
+                <span>Kornet</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-marker legend-marker-pentagon" style="background: #7fbf9b; border: 2px solid #333;"></div>
+                <span>AT-3 Sagger</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-marker legend-marker-star" style="background: #7fbf9b; border: 2px solid #333;"></div>
+                <span>Other</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="data.js"></script>
+    <script>
+        let map;
+        let markers = [];
+        let allData = [];
+        let markerLayer;
+        let heatLayer;
+        let timelineDates = [];
+        let isPlaying = false;
+        let playInterval = null;
+
+        map = L.map('map').setView([35.0, 38.0], 7);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        markerLayer = L.layerGroup().addTo(map);
+        heatLayer = null;
+
+        map.on('zoomend', function() {
+            updateMarkerSizes();
+        });
+
+        function dmsToDecimal(dms) {
+            // Trim any leading/trailing whitespace and remove extra quotes
+            dms = dms.trim().replace(/"/g, '"').replace(/["""]/g, '');
+            
+            // Try to match DMS format with optional decimal seconds
+            // Handles formats like: 36°4'29.83"N or 36° 4'29.83"N
+            const parts = dms.match(/(\d+)°\s*(\d+)'\s*([\d.]+)"?\s*([NSEW])/);
+            if (!parts) return null;
+            
+            let decimal = parseInt(parts[1]) + parseInt(parts[2])/60 + parseFloat(parts[3])/3600;
+            if (parts[4] === 'S' || parts[4] === 'W') {
+                decimal *= -1;
+            }
+            return decimal;
+        }
+
+        function getMarkerColor(precision) {
+            const precisionLower = precision.toLowerCase();
+            if (precisionLower === 'precise') return '#7fbf9b';
+            if (precisionLower === 'approximate') return '#E6C86E';
+            if (precisionLower === 'general') return '#D88C8C';
+            return '#95a5a6';
+        }
+
+        function getMarkerShape(atgm) {
+            const atmgLower = atgm.toLowerCase();
+            if (atmgLower.includes('tow')) return 'circle';
+            if (atmgLower.includes('fagot')) return 'square';
+            if (atmgLower.includes('konkurs')) return 'diamond';
+            if (atmgLower.includes('kornet')) return 'triangle';
+            if (atmgLower.includes('sagger') || atmgLower.includes('at-3')) return 'pentagon';
+            return 'star';
+        }
+
+        function getMarkerSize(zoom) {
+            if (zoom <= 6) return 2;
+            if (zoom <= 8) return 3;
+            if (zoom <= 10) return 5;
+            if (zoom <= 12) return 7;
+            if (zoom <= 14) return 9;
+            return 11;
+        }
+
+        function createMarkerHTML(color, shape, size) {
+            const baseStyle = `border: 1.5px solid #333;`;
+            const halfSize = size / 2;
+            
+            switch(shape) {
+                case 'circle':
+                    return `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; border-radius: 50%; ${baseStyle}"></div>`;
+                case 'square':
+                    return `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; ${baseStyle}"></div>`;
+                case 'diamond':
+                    return `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; transform: rotate(45deg); ${baseStyle}"></div>`;
+                case 'triangle':
+                    return `<div style="width: 0; height: 0; border-left: ${halfSize}px solid transparent; border-right: ${halfSize}px solid transparent; border-bottom: ${size}px solid ${color}; border-top: none; filter: drop-shadow(0 0 0.5px #333);"></div>`;
+                case 'pentagon':
+                    return `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%); ${baseStyle}"></div>`;
+                case 'star':
+                    return `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); ${baseStyle}"></div>`;
+                default:
+                    return `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; border-radius: 50%; ${baseStyle}"></div>`;
+            }
+        }
+
+        function createMarker(lat, lng, data) {
+            const color = getMarkerColor(data.Precision);
+            const shape = getMarkerShape(data.ATGM);
+            const zoom = map.getZoom();
+            const size = getMarkerSize(zoom);
+            const markerHTML = createMarkerHTML(color, shape, size);
+            
+            const icon = L.divIcon({
+                className: 'custom-marker',
+                html: markerHTML,
+                iconSize: [size, size],
+                iconAnchor: [size/2, size/2]
+            });
+
+            const marker = L.marker([lat, lng], { icon: icon });
+            
+            const popupContent = `
+                <div>
+                    <div class="popup-field"><strong>Date:</strong> ${data.Date}</div>
+                    <div class="popup-field"><strong>Location:</strong> ${data.Location}${data.Location_2 ? ' / ' + data.Location_2 : ''}</div>
+                    <div class="popup-field"><strong>Province:</strong> ${data.Province}</div>
+                    <div class="popup-field"><strong>Precision:</strong> ${data.Precision}</div>
+                    <div class="popup-field"><strong>ATGM:</strong> ${data.ATGM}</div>
+                    <div class="popup-field"><strong>Target Class:</strong> ${data.Target_Class}</div>
+                    <div class="popup-field"><strong>Target Subclass:</strong> ${data.Target_Subclass}</div>
+                    <div class="popup-field"><strong>Result:</strong> ${data.Result}</div>
+                    <div class="popup-field"><strong>Group:</strong> ${data.Group}</div>
+                    <div class="popup-field"><strong>Enemy:</strong> ${data.Enemy}</div>
+                    <div class="popup-field"><strong>Description:</strong> ${data.Description}</div>
+                </div>
+            `;
+            
+            marker.bindPopup(popupContent);
+            marker.data = data;
+            
+            return marker;
+        }
+
+        function populateFilters(data) {
+            const fields = {
+                locationFilter: new Set(),
+                provinceFilter: new Set(),
+                precisionFilter: new Set(),
+                atmgFilter: new Set(),
+                targetClassFilter: new Set(),
+                targetSubclassFilter: new Set(),
+                resultFilter: new Set(),
+                groupFilter: new Set(),
+                enemyFilter: new Set()
+            };
+
+            data.forEach(row => {
+                if (row.Location) fields.locationFilter.add(row.Location);
+                if (row.Province) fields.provinceFilter.add(row.Province);
+                if (row.Precision) fields.precisionFilter.add(row.Precision);
+                if (row.ATGM) fields.atmgFilter.add(row.ATGM);
+                if (row.Target_Class) fields.targetClassFilter.add(row.Target_Class);
+                if (row.Target_Subclass) fields.targetSubclassFilter.add(row.Target_Subclass);
+                if (row.Result) fields.resultFilter.add(row.Result);
+                if (row.Group) fields.groupFilter.add(row.Group);
+                if (row.Enemy) fields.enemyFilter.add(row.Enemy);
+            });
+
+            Object.keys(fields).forEach(filterId => {
+                const select = document.getElementById(filterId);
+                Array.from(fields[filterId]).sort().forEach(value => {
+                    const option = document.createElement('option');
+                    option.value = value;
+                    option.textContent = value;
+                    select.appendChild(option);
+                });
+            });
+        }
+
+        function parseDate(dateStr) {
+            const parts = dateStr.split('/');
+            if (parts.length === 3) {
+                return new Date(parts[2], parts[0] - 1, parts[1]);
+            }
+            return null;
+        }
+
+        function applyFilters() {
+            markerLayer.clearLayers();
+            
+            const dateFrom = document.getElementById('dateFrom').value ? new Date(document.getElementById('dateFrom').value) : null;
+            const dateTo = document.getElementById('dateTo').value ? new Date(document.getElementById('dateTo').value) : null;
+            const location = document.getElementById('locationFilter').value;
+            const province = document.getElementById('provinceFilter').value;
+            const precision = document.getElementById('precisionFilter').value;
+            const atgm = document.getElementById('atmgFilter').value;
+            const targetClass = document.getElementById('targetClassFilter').value;
+            const targetSubclass = document.getElementById('targetSubclassFilter').value;
+            const result = document.getElementById('resultFilter').value;
+            const group = document.getElementById('groupFilter').value;
+            const enemy = document.getElementById('enemyFilter').value;
+            
+            const sliderValue = parseInt(document.getElementById('timeSlider').value);
+            const timelineEndDate = getTimelineEndDate(sliderValue);
+            
+            // Update current date display
+            updateCurrentDateDisplay(sliderValue);
+
+            let visibleCount = 0;
+            let heatData = [];
+
+            markers.forEach(marker => {
+                const data = marker.data;
+                const rowDate = parseDate(data.Date);
+                
+                let show = true;
+                
+                if (dateFrom && rowDate < dateFrom) show = false;
+                if (dateTo && rowDate > dateTo) show = false;
+                if (timelineEndDate && rowDate > timelineEndDate) show = false;
+                if (location && data.Location !== location) show = false;
+                if (province && data.Province !== province) show = false;
+                if (precision && data.Precision !== precision) show = false;
+                if (atgm && data.ATGM !== atgm) show = false;
+                if (targetClass && data.Target_Class !== targetClass) show = false;
+                if (targetSubclass && data.Target_Subclass !== targetSubclass) show = false;
+                if (result && data.Result !== result) show = false;
+                if (group && data.Group !== group) show = false;
+                if (enemy && data.Enemy !== enemy) show = false;
+                
+                if (show) {
+                    markerLayer.addLayer(marker);
+                    const latLng = marker.getLatLng();
+                    heatData.push([latLng.lat, latLng.lng, 1]);
+                    visibleCount++;
+                }
+            });
+            
+            updateCounter(visibleCount);
+            updateHeatmap(heatData);
+        }
+        
+        function updateCounter(visibleCount) {
+            document.getElementById('visibleCount').textContent = visibleCount;
+            document.getElementById('totalCount').textContent = markers.length;
+        }
+        
+        function getTimelineEndDate(sliderValue) {
+            if (sliderValue >= 100 || timelineDates.length === 0) return null;
+            const index = Math.floor((sliderValue / 100) * (timelineDates.length - 1));
+            return timelineDates[index];
+        }
+        
+        function initializeTimeline() {
+            if (allData.length === 0) return;
+            
+            const dates = allData
+                .map(row => parseDate(row.Date))
+                .filter(date => date !== null)
+                .sort((a, b) => a - b);
+            
+            timelineDates = dates;
+            
+            if (dates.length > 0) {
+                document.getElementById('sliderStartDate').textContent = formatDate(dates[0]);
+                document.getElementById('sliderEndDate').textContent = formatDate(dates[dates.length - 1]);
+            }
+        }
+        
+        function formatDate(date) {
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${month}/${day}/${year}`;
+        }
+        
+        function togglePlay() {
+            const btn = document.getElementById('playBtn');
+            const slider = document.getElementById('timeSlider');
+            
+            if (isPlaying) {
+                isPlaying = false;
+                btn.textContent = '▶ Play';
+                btn.classList.remove('playing');
+                if (playInterval) {
+                    clearInterval(playInterval);
+                    playInterval = null;
+                }
+            } else {
+                isPlaying = true;
+                btn.textContent = '⏸ Pause';
+                btn.classList.add('playing');
+                
+                playInterval = setInterval(() => {
+                    let currentValue = parseInt(slider.value);
+                    if (currentValue >= 100) {
+                        currentValue = 0;
+                    } else {
+                        currentValue += 1;
+                    }
+                    slider.value = currentValue;
+                    applyFilters();
+                }, 200);  // Change this number to adjust playback speed (milliseconds)
+            }
+        }
+        
+        function resetTimeline() {
+            if (isPlaying) {
+                togglePlay();
+            }
+            document.getElementById('timeSlider').value = 100;
+            applyFilters();
+        }
+
+        function updateMarkerSizes() {
+            const zoom = map.getZoom();
+            const size = getMarkerSize(zoom);
+            
+            markers.forEach(marker => {
+                const data = marker.data;
+                const color = getMarkerColor(data.Precision);
+                const shape = getMarkerShape(data.ATGM);
+                const markerHTML = createMarkerHTML(color, shape, size);
+                
+                const newIcon = L.divIcon({
+                    className: 'custom-marker',
+                    html: markerHTML,
+                    iconSize: [size, size],
+                    iconAnchor: [size/2, size/2]
+                });
+                
+                marker.setIcon(newIcon);
+            });
+        }
+
+        function resetFilters() {
+            if (isPlaying) {
+                togglePlay();
+            }
+            document.getElementById('dateFrom').value = '';
+            document.getElementById('dateTo').value = '';
+            document.getElementById('timeSlider').value = 100;
+            document.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
+            applyFilters();
+        }
+
+        function updateHeatmap(heatData) {
+            if (heatLayer) {
+                map.removeLayer(heatLayer);
+            }
+            
+            if (heatData.length > 0) {
+                heatLayer = L.heatLayer(heatData, {
+                    radius: 30,
+                    blur: 40,
+                    maxZoom: 17,
+                    max: 0.5,
+                    gradient: {
+                        0.0: 'blue',
+                        0.3: 'cyan',
+                        0.5: 'lime',
+                        0.7: 'yellow',
+                        0.85: 'orange',
+                        1.0: 'red'
+                    }
+                });
+                
+                if (document.getElementById('showHeatmap').checked) {
+                    map.addLayer(heatLayer);
+                }
+            }
+        }
+
+        function toggleMarkers() {
+            if (document.getElementById('showMarkers').checked) {
+                map.addLayer(markerLayer);
+            } else {
+                map.removeLayer(markerLayer);
+            }
+        }
+
+        function toggleHeatmap() {
+            if (document.getElementById('showHeatmap').checked) {
+                if (heatLayer) {
+                    map.addLayer(heatLayer);
+                }
+            } else {
+                if (heatLayer) {
+                    map.removeLayer(heatLayer);
+                }
+            }
+        }
+
+        function updateCurrentDateDisplay(sliderValue) {
+            const display = document.getElementById('currentDateDisplay');
+            
+            if (sliderValue >= 100 || timelineDates.length === 0) {
+                display.textContent = 'All Data';
+                display.style.background = '#f0f0f0';
+                display.style.color = '#333';
+            } else {
+                const currentDate = getTimelineEndDate(sliderValue);
+                if (currentDate) {
+                    display.textContent = formatDate(currentDate);
+                    display.style.background = '#4CAF50';
+                    display.style.color = 'white';
+                }
+            }
+        }
+
+        document.querySelectorAll('select').forEach(element => {
+            element.addEventListener('change', applyFilters);
+        });
+        document.getElementById('dateFrom').addEventListener('change', applyFilters);
+        document.getElementById('dateTo').addEventListener('change', applyFilters);
+        document.getElementById('timeSlider').addEventListener('input', applyFilters);
+
+        function loadCSV(csvText) {
+            markerLayer.clearLayers();
+            markers = [];
+            allData = [];
+            
+            document.querySelectorAll('select').forEach(select => {
+                while (select.options.length > 1) {
+                    select.remove(1);
+                }
+                select.selectedIndex = 0;
+            });
+            
+            Papa.parse(csvText, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    allData = results.data;
+                    
+                    let missingCoords = 0;
+                    let invalidFormat = 0;
+                    let successful = 0;
+                    
+                    allData.forEach((row, index) => {
+                        if (!row.Latitude || !row.Longitude) {
+                            missingCoords++;
+                            return;
+                        }
+                        
+                        const lat = dmsToDecimal(row.Latitude);
+                        const lng = dmsToDecimal(row.Longitude);
+                        
+                        if (!lat || !lng) {
+                            invalidFormat++;
+                            console.log(`Row ${index + 2}: Invalid coordinate format`);
+                            console.log(`  Latitude: "${row.Latitude}"`);
+                            console.log(`  Longitude: "${row.Longitude}"`);
+                            return;
+                        }
+                        
+                        const marker = createMarker(lat, lng, row);
+                        markers.push(marker);
+                        markerLayer.addLayer(marker);
+                        successful++;
+                    });
+                    
+                    console.log('=== CSV Loading Summary ===');
+                    console.log(`Total rows in CSV: ${allData.length}`);
+                    console.log(`Successfully mapped: ${successful}`);
+                    console.log(`Missing coordinates: ${missingCoords}`);
+                    console.log(`Invalid format: ${invalidFormat}`);
+                    console.log(`Total failed: ${missingCoords + invalidFormat}`);
+                    
+                    populateFilters(allData);
+                    initializeTimeline();
+                    
+                    if (markers.length > 0) {
+                        const group = L.featureGroup(markers);
+                        map.fitBounds(group.getBounds().pad(0.1));
+                    }
+                    
+                    updateCounter(markers.length);
+                }
+            });
+        }
+
+        // Load the embedded data automatically when page loads
+        window.addEventListener('load', function() {
+            loadCSV(csvData);
+        });
+    </script>
+</body>
+</html>
