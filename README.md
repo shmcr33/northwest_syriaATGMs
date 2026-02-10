@@ -19,6 +19,6 @@ Harakat Hazzm
 
 13th Division
 
-Liwa Fursan al-Haqq 
+101st Division
 
 Addtional data will be uploaded as the geolocation and validation of videos from different groups is completed. OpenStreetMaps, MapBox Topograhy, and MapBox Streets V-12 are currently the base layer. 
