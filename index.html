@@ -416,10 +416,13 @@
 
         map = L.map('map').setView([35.0, 38.0], 7);
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
+        L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoic2htY3JlZSIsImEiOiJjbWxoOGU0bTcwNngwM2VwdXlmdHQ0NTNrIn0.otN-Kb4dQz63-LwUZIz5NQ', {
+            attribution: '© Mapbox © OpenStreetMap contributors',
+            tileSize: 512,
+            zoomOffset: -1,
+            maxZoom: 19
         }).addTo(map);
-
+        
         markerLayer = L.layerGroup().addTo(map);
         heatLayer = null;
 
