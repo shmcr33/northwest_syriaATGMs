@@ -21,4 +21,14 @@ Harakat Hazzm
 
 101st Division
 
+Liwa Fursan al-Haqq
+
+Below are useful terms that have been abbreviated on the map: 
+
+SAA = Syrian Arab Army
+
+YPG = People's Defense Units
+
+ISIS = Islamic State
+
 Addtional data will be uploaded as the geolocation and validation of videos from different groups is completed. OpenStreetMaps, MapBox Topograhy, and MapBox Streets V-12 are currently the base layer. 
